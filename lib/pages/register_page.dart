@@ -1,83 +1,83 @@
 import 'package:flutter/material.dart';
 import '../repositories/auth_repository.dart';
-import '../pages/main_navigation.dart';
-import '../pages/register_page.dart';
 import '../utils/network_wrrapper.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
   final AuthRepository _repository = AuthRepository();
   
+  final nameC = TextEditingController();
   final emailC = TextEditingController();
   final passC = TextEditingController();
+  final confirmPassC = TextEditingController();
+  final campusC = TextEditingController();
+  final majorC = TextEditingController();
+  final semesterC = TextEditingController();
 
   bool loading = false;
   bool showPassword = false;
+  bool showConfirmPassword = false;
   String? errorMessage;
+  String? successMessage;
 
   @override
   void dispose() {
+    nameC.dispose();
     emailC.dispose();
     passC.dispose();
+    confirmPassC.dispose();
+    campusC.dispose();
+    majorC.dispose();
+    semesterC.dispose();
     super.dispose();
   }
 
-  Future<void> login() async {
-    // Hapus error message sebelumnya
+  Future<void> register() async {
     setState(() {
       loading = true;
       errorMessage = null;
+      successMessage = null;
     });
 
-    // Validasi input
-    if (emailC.text.trim().isEmpty) {
-      setState(() {
-        errorMessage = "Email tidak boleh kosong";
-        loading = false;
-      });
-      return;
-    }
-
-    if (passC.text.trim().isEmpty) {
-      setState(() {
-        errorMessage = "Password tidak boleh kosong";
-        loading = false;
-      });
-      return;
-    }
-
     try {
-      final result = await _repository.loginUser(
+      final result = await _repository.registerUser(
+        name: nameC.text,
         email: emailC.text,
         password: passC.text,
+        confirmPassword: confirmPassC.text,
+        campus: campusC.text.isEmpty ? null : campusC.text,
+        major: majorC.text.isEmpty ? null : majorC.text,
+        semester: semesterC.text.isEmpty ? null : int.tryParse(semesterC.text),
       );
 
       if (!mounted) return;
 
       if (result['success'] == true) {
-        final int userId = result['userId'];
+        setState(() {
+          successMessage = "Registrasi berhasil! Silakan login.";
+        });
+
+        // Delay sebelum kembali ke halaman login
+        await Future.delayed(const Duration(seconds: 2));
         
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => MainNavigation(userId: userId),
-          ),
-        );
+        if (mounted) {
+          Navigator.pop(context);
+        }
       } else {
         setState(() {
-          errorMessage = result['message'] ?? "Login gagal";
+          errorMessage = result['message'] ?? "Registrasi gagal";
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          errorMessage = "Terjadi kesalahan saat login";
+          errorMessage = "Terjadi kesalahan saat registrasi";
         });
       }
     } finally {
@@ -89,7 +89,6 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ WRAP WITH NetworkWrapper
     return NetworkWrapper(
       showSnackbar: true,
       showOverlay: true,
@@ -107,14 +106,14 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 60),
-                _buildHeader(),
-                const SizedBox(height: 50),
-                _buildLoginForm(),
-                const SizedBox(height: 24),
-                _buildForgotPassword(),
+                const SizedBox(height: 40),
+                _buildBackButton(),
                 const SizedBox(height: 20),
-                _buildRegisterLink(),
+                _buildHeader(),
+                const SizedBox(height: 30),
+                _buildRegisterForm(),
+                const SizedBox(height: 24),
+                _buildLoginLink(),
                 const SizedBox(height: 40),
               ],
             ),
@@ -124,6 +123,23 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  Widget _buildBackButton() {
+    return IconButton(
+      onPressed: () => Navigator.pop(context),
+      icon: Icon(
+        Icons.arrow_back_rounded,
+        color: Colors.indigo.shade600,
+        size: 28,
+      ),
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.white,
+        padding: const EdgeInsets.all(12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
 
   Widget _buildHeader() {
     return Column(
@@ -146,11 +162,11 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ],
           ),
-          child: const Icon(Icons.school_rounded, color: Colors.white, size: 40),
+          child: const Icon(Icons.person_add_rounded, color: Colors.white, size: 40),
         ),
         const SizedBox(height: 24),
         const Text(
-          "Welcome Back!",
+          "Create Account",
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.w800,
@@ -160,7 +176,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
         const SizedBox(height: 8),
         Text(
-          "Sign in to continue to CampusPlanner",
+          "Sign up to get started with CampusPlanner",
           style: TextStyle(
             fontSize: 15,
             color: Colors.grey.shade600,
@@ -172,8 +188,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
- 
-  Widget _buildLoginForm() {
+  Widget _buildRegisterForm() {
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
@@ -190,28 +205,90 @@ class _LoginPageState extends State<LoginPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildEmailField(),
+          _buildTextField(
+            label: "Nama Lengkap",
+            controller: nameC,
+            hint: "Masukkan nama lengkap",
+            icon: Icons.person_rounded,
+          ),
           const SizedBox(height: 20),
-          _buildPasswordField(),
+          _buildTextField(
+            label: "Email Address",
+            controller: emailC,
+            hint: "yourmail@example.com",
+            icon: Icons.email_rounded,
+            keyboardType: TextInputType.emailAddress,
+          ),
+          const SizedBox(height: 20),
+          _buildPasswordField(
+            label: "Password",
+            controller: passC,
+            hint: "Minimal 6 karakter",
+            showPassword: showPassword,
+            onToggle: () => setState(() => showPassword = !showPassword),
+          ),
+          const SizedBox(height: 20),
+          _buildPasswordField(
+            label: "Konfirmasi Password",
+            controller: confirmPassC,
+            hint: "Ulangi password",
+            showPassword: showConfirmPassword,
+            onToggle: () => setState(() => showConfirmPassword = !showConfirmPassword),
+          ),
+          const SizedBox(height: 24),
+          _buildDivider(),
+          const SizedBox(height: 24),
+          _buildTextField(
+            label: "Kampus (Opsional)",
+            controller: campusC,
+            hint: "Nama kampus",
+            icon: Icons.school_rounded,
+          ),
+          const SizedBox(height: 20),
+          _buildTextField(
+            label: "Jurusan (Opsional)",
+            controller: majorC,
+            hint: "Nama jurusan",
+            icon: Icons.book_rounded,
+          ),
+          const SizedBox(height: 20),
+          _buildTextField(
+            label: "Semester (Opsional)",
+            controller: semesterC,
+            hint: "Contoh: 5",
+            icon: Icons.calendar_today_rounded,
+            keyboardType: TextInputType.number,
+          ),
           
           if (errorMessage != null) ...[
             const SizedBox(height: 20),
             _buildErrorMessage(),
           ],
           
+          if (successMessage != null) ...[
+            const SizedBox(height: 20),
+            _buildSuccessMessage(),
+          ],
+          
           const SizedBox(height: 32),
-          _buildLoginButton(),
+          _buildRegisterButton(),
         ],
       ),
     );
   }
 
-  Widget _buildEmailField() {
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    TextInputType? keyboardType,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Email Address",
+          label,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -229,15 +306,15 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
           child: TextField(
-            controller: emailC,
-            keyboardType: TextInputType.emailAddress,
+            controller: controller,
+            keyboardType: keyboardType,
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,
               color: Color(0xFF1A1F36),
             ),
             decoration: InputDecoration(
-              hintText: "yourmail@example.com",
+              hintText: hint,
               hintStyle: TextStyle(
                 color: Colors.grey.shade400,
                 fontSize: 15,
@@ -245,7 +322,7 @@ class _LoginPageState extends State<LoginPage> {
               prefixIcon: Container(
                 padding: const EdgeInsets.all(12),
                 child: Icon(
-                  Icons.email_rounded,
+                  icon,
                   color: Colors.indigo.shade600,
                   size: 22,
                 ),
@@ -262,12 +339,18 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildPasswordField() {
+  Widget _buildPasswordField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    required bool showPassword,
+    required VoidCallback onToggle,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Password",
+          label,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -285,7 +368,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
           child: TextField(
-            controller: passC,
+            controller: controller,
             obscureText: !showPassword,
             style: const TextStyle(
               fontSize: 15,
@@ -293,7 +376,7 @@ class _LoginPageState extends State<LoginPage> {
               color: Color(0xFF1A1F36),
             ),
             decoration: InputDecoration(
-              hintText: "Enter your password",
+              hintText: hint,
               hintStyle: TextStyle(
                 color: Colors.grey.shade400,
                 fontSize: 15,
@@ -314,9 +397,7 @@ class _LoginPageState extends State<LoginPage> {
                   color: Colors.grey.shade600,
                   size: 22,
                 ),
-                onPressed: () {
-                  setState(() => showPassword = !showPassword);
-                },
+                onPressed: onToggle,
               ),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
@@ -326,6 +407,26 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildDivider() {
+    return Row(
+      children: [
+        Expanded(child: Divider(color: Colors.grey.shade300)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            "Informasi Tambahan",
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Expanded(child: Divider(color: Colors.grey.shade300)),
       ],
     );
   }
@@ -364,12 +465,46 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildLoginButton() {
+  Widget _buildSuccessMessage() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.green.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.green.shade200,
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.check_circle_outline_rounded,
+            color: Colors.green.shade700,
+            size: 22,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              successMessage!,
+              style: TextStyle(
+                color: Colors.green.shade700,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRegisterButton() {
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: loading ? null : login,
+        onPressed: loading ? null : register,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.indigo.shade600,
           foregroundColor: Colors.white,
@@ -393,7 +528,7 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    "Sign In",
+                    "Create Account",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -411,55 +546,13 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildForgotPassword() {
-    return Center(
-      child: TextButton(
-        onPressed: () {
-          // TODO: Implement forgot password
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Forgot password feature coming soon!'),
-              backgroundColor: Colors.indigo.shade600,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
-        },
-        style: TextButton.styleFrom(
-          foregroundColor: Colors.indigo.shade600,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.help_outline_rounded,
-              size: 18,
-              color: Colors.indigo.shade600,
-            ),
-            const SizedBox(width: 6),
-            const Text(
-              "Forgot Password?",
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRegisterLink() {
+  Widget _buildLoginLink() {
     return Center(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            "Belum punya akun? ",
+            "Sudah punya akun? ",
             style: TextStyle(
               fontSize: 15,
               color: Colors.grey.shade600,
@@ -467,20 +560,13 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const RegisterPage(),
-                ),
-              );
-            },
+            onPressed: () => Navigator.pop(context),
             style: TextButton.styleFrom(
               foregroundColor: Colors.indigo.shade600,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             ),
             child: const Text(
-              "Daftar Sekarang",
+              "Login",
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,

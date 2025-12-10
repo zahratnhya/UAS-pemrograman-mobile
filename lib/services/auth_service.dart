@@ -53,4 +53,64 @@ class AuthService {
       };
     }
   }
+
+  /// Register user baru
+  Future<Map<String, dynamic>> register({
+    required String name,
+    required String email,
+    required String password,
+    String? campus,
+    String? major,
+    int? semester,
+    String? profileImageBase64,
+  }) async {
+    final url = Uri.parse("$_baseUrl?path=users&action=register");
+
+    try {
+      print('===== REGISTER REQUEST =====');
+      print('URL: $url');
+      print('Name: $name');
+      print('Email: $email');
+      print('Campus: $campus');
+      print('Major: $major');
+      print('Semester: $semester');
+
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "name": name,
+          "email": email,
+          "password": password,
+          "campus": campus,
+          "major": major,
+          "semester": semester,
+          "profile_image": profileImageBase64,
+        }),
+      );
+
+      print('Response Status: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      print('============================');
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        return {
+          'success': decoded['success'] ?? false,
+          'message': decoded['message'] ?? 'Unknown error',
+        };
+      }
+
+      return {
+        'success': false,
+        'message': 'HTTP Error ${response.statusCode}',
+      };
+    } catch (e) {
+      print('Error during register: $e');
+      return {
+        'success': false,
+        'message': 'Error: ${e.toString()}',
+      };
+    }
+  }
 }
