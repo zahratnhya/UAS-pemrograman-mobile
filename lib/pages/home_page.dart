@@ -243,7 +243,7 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         _buildHeader(),
                         const SizedBox(height: 24),
-                        _buildStatisticsCards(),
+                        _buildStatisticsCards(classesToday),
                       ],
                     ),
                   ),
@@ -359,14 +359,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   /// Statistics Cards
-  Widget _buildStatisticsCards() {
+   Widget _buildStatisticsCards(List<dynamic> classesToday) {
     return Row(
       children: [
         Expanded(
           child: _buildStatCard(
             icon: Icons.school_rounded,
             label: 'Classes',
-            value: schedule.length.toString(),
+            value: classesToday.length.toString(), // ✅ FIXED
             color: Colors.blue,
           ),
         ),

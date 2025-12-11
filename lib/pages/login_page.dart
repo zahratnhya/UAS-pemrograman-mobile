@@ -112,8 +112,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 50),
                 _buildLoginForm(),
                 const SizedBox(height: 24),
-                _buildForgotPassword(),
-                const SizedBox(height: 20),
+                
                 _buildRegisterLink(),
                 const SizedBox(height: 40),
               ],
@@ -411,47 +410,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildForgotPassword() {
-    return Center(
-      child: TextButton(
-        onPressed: () {
-          // TODO: Implement forgot password
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Forgot password feature coming soon!'),
-              backgroundColor: Colors.indigo.shade600,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
-        },
-        style: TextButton.styleFrom(
-          foregroundColor: Colors.indigo.shade600,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.help_outline_rounded,
-              size: 18,
-              color: Colors.indigo.shade600,
-            ),
-            const SizedBox(width: 6),
-            const Text(
-              "Forgot Password?",
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  
 
   Widget _buildRegisterLink() {
     return Center(
